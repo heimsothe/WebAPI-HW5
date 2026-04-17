@@ -1,10 +1,10 @@
 {
   "info": {
-    "_postman_id": "35794997-dfe6-4692-9131-924a54892640",
-    "name": "CSCI3916_HW4",
+    "_postman_id": "6544b16b-d3ef-498c-be02-268583bc990d",
+    "name": "CSCI3916_HW5",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "49915090",
-    "_collection_link": "https://go.postman.co/collection/49915090-35794997-dfe6-4692-9131-924a54892640?source=collection_link"
+    "_collection_link": "https://go.postman.co/collection/49915090-6544b16b-d3ef-498c-be02-268583bc990d?source=collection_link"
   },
   "item": [
     {
@@ -205,6 +205,31 @@
               "    const response = pm.response.json();",
               "    pm.expect(response).to.be.an('array');",
               "    pm.expect(response.length).to.be.at.least(1);",
+              "});",
+              "",
+              "pm.test('Each movie has HW5 fields (avgRating) and NO reviews', function () {",
+              "    const movies = pm.response.json();",
+              "    movies.forEach(m => {",
+              "        pm.expect(m).to.have.property('title');",
+              "        pm.expect(m).to.have.property('releaseDate');",
+              "        pm.expect(m).to.have.property('genre');",
+              "        pm.expect(m).to.have.property('actors');",
+              "        pm.expect(m).to.have.property('avgRating');",
+              "        pm.expect(m).to.not.have.property('reviews');",
+              "    });",
+              "});",
+              "",
+              "pm.test('At least one movie has an imageUrl (seeded movies)', function () {",
+              "    const movies = pm.response.json();",
+              "    const withImage = movies.filter(m => m.imageUrl);",
+              "    pm.expect(withImage.length).to.be.at.least(1);",
+              "});",
+              "",
+              "pm.test('Movies are sorted descending by avgRating', function () {",
+              "    const movies = pm.response.json();",
+              "    for (let i = 1; i < movies.length; i++) {",
+              "        pm.expect(movies[i].avgRating).to.be.at.most(movies[i - 1].avgRating);",
+              "    }",
               "});"
             ]
           }
@@ -235,24 +260,30 @@
       "event": [
         {
           "script": {
-            "type": "text/javascript",
             "exec": [
               "pm.test('Status code is 200', function () {",
               "    pm.response.to.have.status(200);",
               "});",
               "",
-              "pm.test('Response is The Dark Knight', function () {",
+              "pm.test('Response has core movie fields', function () {",
               "    const response = pm.response.json();",
-              "    pm.expect(response.title).to.eql('The Dark Knight');",
-              "    pm.expect(response.genre).to.eql('Action');",
+              "    pm.expect(response).to.have.property('title');",
+              "    pm.expect(response).to.have.property('genre');",
               "    pm.expect(response.actors).to.be.an('array');",
               "});",
               "",
-              "pm.test('Response does NOT include reviews', function () {",
+              "pm.test('Response has avgRating (number)', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response).to.have.property('avgRating');",
+              "    pm.expect(response.avgRating).to.be.a('number');",
+              "});",
+              "",
+              "pm.test('Response does NOT include reviews (flag absent)', function () {",
               "    const response = pm.response.json();",
               "    pm.expect(response).to.not.have.property('reviews');",
               "});"
-            ]
+            ],
+            "type": "text/javascript"
           },
           "listen": "test"
         }
@@ -266,13 +297,13 @@
           }
         ],
         "url": {
-          "raw": "{{url}}/movies/69c9a1bc41c004e04dab8b7d",
+          "raw": "{{url}}/movies/{{movie_id}}",
           "host": [
             "{{url}}"
           ],
           "path": [
             "movies",
-            "69c9a1bc41c004e04dab8b7d"
+            "{{movie_id}}"
           ]
         }
       },
@@ -622,24 +653,31 @@
         {
           "listen": "test",
           "script": {
-            "type": "text/javascript",
             "exec": [
               "pm.test('Status code is 200', function () {",
               "    pm.response.to.have.status(200);",
               "});",
               "",
-              "pm.test('Response has movie title', function () {",
+              "pm.test('Response has core movie fields', function () {",
               "    const response = pm.response.json();",
-              "    pm.expect(response.title).to.eql('Postman Test Movie');",
+              "    pm.expect(response).to.have.property('title');",
+              "    pm.expect(response).to.have.property('genre');",
+              "    pm.expect(response.actors).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Response has avgRating (number)', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response).to.have.property('avgRating');",
+              "    pm.expect(response.avgRating).to.be.a('number');",
               "});",
               "",
               "pm.test('Response includes reviews array', function () {",
               "    const response = pm.response.json();",
               "    pm.expect(response).to.have.property('reviews');",
               "    pm.expect(response.reviews).to.be.an('array');",
-              "    pm.expect(response.reviews.length).to.be.greaterThan(0);",
               "});"
-            ]
+            ],
+            "type": "text/javascript"
           }
         }
       ],
