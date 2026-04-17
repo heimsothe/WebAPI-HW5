@@ -85,7 +85,7 @@ describe('Test Movie Routes', () => {
 
     //Test the GET route
     describe('GET Movies', () => {
-        it('it return all movies', (done) => {
+        it('it should return movies sorted by avgRating with imageUrl and no reviews', (done) => {
             chai.request(server)
                 .get('/movies')
                 .set('Authorization', token)
@@ -94,13 +94,29 @@ describe('Test Movie Routes', () => {
                     res.should.have.status(200);
                     res.body.should.be.an('array');
                     res.body.forEach(movie => {
-                        movie.should.have.property('title')
-                        movie.should.have.property('releaseDate')
-                        movie.should.have.property('genre')
-                        movie.should.have.property('actors')
+                        movie.should.have.property('title');
+                        movie.should.have.property('releaseDate');
+                        movie.should.have.property('genre');
+                        movie.should.have.property('actors');
+                        movie.should.have.property('avgRating');
+                        movie.should.not.have.property('reviews');
                     });
+                    // Verify sorted descending by avgRating
+                    for (let i = 1; i < res.body.length; i++) {
+                        res.body[i].avgRating.should.be.at.most(res.body[i - 1].avgRating);
+                    }
                     done();
                 })
-        })
+        });
+
+        it('it should return 401 without a token', (done) => {
+            chai.request(server)
+                .get('/movies')
+                .send()
+                .end((err, res) => {
+                    res.should.have.status(401);
+                    done();
+                })
+        });
     });
 });
