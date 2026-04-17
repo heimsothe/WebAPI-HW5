@@ -163,33 +163,32 @@ router.route('/movies')
 router.route('/movies/:id')
     .get(authJwtController.isAuthenticated, async (req, res) => {
         try {
-            if (req.query.reviews === 'true') {
-                const result = await Movie.aggregate([
-                    { $match: { _id: new mongoose.Types.ObjectId(req.params.id) } },
-                    {
-                        $lookup: {
-                            from: 'reviews',
-                            localField: '_id',
-                            foreignField: 'movieId',
-                            as: 'reviews'
-                        }
+            var includeReviews = req.query.reviews === 'true';
+            var pipeline = [
+                { $match: { _id: new mongoose.Types.ObjectId(req.params.id) } },
+                {
+                    $lookup: {
+                        from: 'reviews',
+                        localField: '_id',
+                        foreignField: 'movieId',
+                        as: 'reviews'
                     }
-                ]);
-
-                if (!result || result.length === 0) {
-                    return res.status(404).json({ success: false, msg: 'Movie not found.' });
+                },
+                {
+                    $addFields: {
+                        avgRating: { $ifNull: [{ $avg: '$reviews.rating' }, 0] }
+                    }
                 }
-
-                return res.status(200).json(result[0]);
+            ];
+            if (!includeReviews) {
+                pipeline.push({ $project: { reviews: 0 } });
             }
 
-            const movie = await Movie.findById(req.params.id);
-
-            if (!movie) {
+            var result = await Movie.aggregate(pipeline);
+            if (!result || result.length === 0) {
                 return res.status(404).json({ success: false, msg: 'Movie not found.' });
             }
-
-            res.status(200).json(movie);
+            res.status(200).json(result[0]);
         } catch (err) {
             console.error(err);
             res.status(500).json({ success: false, msg: 'Something went wrong.' });
