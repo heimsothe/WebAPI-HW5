@@ -1,9 +1,14 @@
 require('dotenv').config();
 
 /*
-CSC3916 HW4
-File: Server.js
-Description: Web API scaffolding for Movie API
+- File: server.js
+- Author: Elijah Heimsoth
+- Date: 04/15/2026
+- Assignment: WebAPI-HW5
+- Class: CSCI 3916
+
+Description: Express API server. JWT-authenticated endpoints for
+movies (with avgRating aggregation) and reviews.
  */
 
 var express = require('express');
@@ -94,7 +99,24 @@ router.post('/signin', function (req, res) {
 router.route('/movies')
     .get(authJwtController.isAuthenticated, async (req, res) => {
         try {
-            const movies = await Movie.find();
+            var pipeline = [
+                {
+                    $lookup: {
+                        from: 'reviews',
+                        localField: '_id',
+                        foreignField: 'movieId',
+                        as: 'reviews'
+                    }
+                },
+                {
+                    $addFields: {
+                        avgRating: { $ifNull: [{ $avg: '$reviews.rating' }, 0] }
+                    }
+                },
+                { $project: { reviews: 0 } },
+                { $sort: { avgRating: -1 } }
+            ];
+            var movies = await Movie.aggregate(pipeline);
             res.status(200).json(movies);
         } catch (err) {
             console.error(err);
