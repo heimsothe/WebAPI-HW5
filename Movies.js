@@ -1,3 +1,14 @@
+/*
+- File: Movies.js
+- Author: Elijah Heimsoth
+- Date: 04/15/2026
+- Assignment: WebAPI-HW5
+- Class: CSCI 3916
+
+Description: Mongoose schema and model for the Movie collection.
+Includes imageUrl field added for HW5.
+ */
+
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
@@ -22,6 +33,7 @@ var MovieSchema = new Schema({
         actorName: String,
         characterName: String,
     }],
+    imageUrl: { type: String },
 });
 
 // return the model
