@@ -114,4 +114,84 @@ describe('Test Review Routes', () => {
                 })
         })
     });
+
+    describe('GET Movie Detail with reviews', () => {
+        it('it should return a movie with avgRating and reviews array', (done) => {
+            chai.request(server)
+                .get('/movies/' + review_details.movieId + '?reviews=true')
+                .set('Authorization', token)
+                .send()
+                .end((err, res) => {
+                    res.should.have.status(200);
+                    res.body.should.have.property('title');
+                    res.body.should.have.property('avgRating');
+                    res.body.avgRating.should.be.a('number');
+                    res.body.should.have.property('reviews');
+                    res.body.reviews.should.be.an('array');
+                    res.body.reviews.length.should.be.at.least(1);
+                    done();
+                })
+        });
+
+        it('it should return a movie WITHOUT reviews when flag is absent', (done) => {
+            chai.request(server)
+                .get('/movies/' + review_details.movieId)
+                .set('Authorization', token)
+                .send()
+                .end((err, res) => {
+                    res.should.have.status(200);
+                    res.body.should.have.property('title');
+                    res.body.should.have.property('avgRating');
+                    res.body.should.not.have.property('reviews');
+                    done();
+                })
+        });
+
+        it('it should return 404 for a nonexistent movie', (done) => {
+            chai.request(server)
+                .get('/movies/507f1f77bcf86cd799439011?reviews=true')
+                .set('Authorization', token)
+                .send()
+                .end((err, res) => {
+                    res.should.have.status(404);
+                    done();
+                })
+        });
+    });
+
+    describe('POST /reviews security', () => {
+        it('it should return 401 without a token', (done) => {
+            chai.request(server)
+                .post('/reviews')
+                .send({ movieId: review_details.movieId, review: 'test', rating: 3 })
+                .end((err, res) => {
+                    res.should.have.status(401);
+                    done();
+                })
+        });
+
+        it('it should use JWT username, not body username', (done) => {
+            let attackReview = {
+                movieId: review_details.movieId,
+                review: 'attacker review - security test',
+                rating: 5,
+                username: 'attacker'
+            };
+            chai.request(server)
+                .post('/reviews')
+                .set('Authorization', token)
+                .send(attackReview)
+                .end((err, res) => {
+                    res.should.have.status(200);
+                    Review.findOne({ review: attackReview.review }).lean().then(function(saved) {
+                        saved.username.should.eq(login_details.username);
+                        saved.username.should.not.eq('attacker');
+                        // Cleanup
+                        Review.deleteOne({ review: attackReview.review }).then(function() {
+                            done();
+                        });
+                    });
+                })
+        });
+    });
 });
